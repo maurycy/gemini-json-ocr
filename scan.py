@@ -1,11 +1,26 @@
-import os
-import sys
+# /// script
+# name = "gemini-json-ocr"
+# readme = "README.md"
+# requires-python = ">=3.12.0"
+# dependencies = [
+#     "python-dotenv",
+#     "google-genai",
+#     "pydantic"
+# ]
+# [dependency-groups]
+# dev = [
+#     "ruff"
+# ]
+# ///
+import argparse
 import logging
 import mimetypes
-import argparse
-from google import genai
+import os
+import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
+from google import genai
 
 env_path = Path(__file__).parent / ".env"
 load_dotenv(env_path)
