@@ -5,7 +5,6 @@
 # dependencies = [
 #     "python-dotenv",
 #     "google-genai",
-#     "pydantic"
 # ]
 # [dependency-groups]
 # dev = [
@@ -35,7 +34,7 @@ def read_prompt_from_file(file_path: Path) -> str:
         sys.exit(1)
 
     if file_path.is_file():
-        with open(file_path, "r", encoding="utf-8") as pf:
+        with open(file_path, encoding="utf-8") as pf:
             return pf.read().strip()
     else:
         print(f"Error: Prompt '{file_path}' not found or is not a file.")
