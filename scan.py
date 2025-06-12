@@ -72,28 +72,82 @@ def process_with_gemini(path: str, client: genai.Client, prompt: str) -> str:
     return response.text
 
 
+def process_pdf_file(path: str, client: genai.Client, prompt: str, overwrite: bool, exit_on_skip: bool = False) -> bool:
+    """
+    Process a single PDF file.
+    
+    Args:
+        path: Path to the PDF file
+        client: Gemini client instance
+        prompt: Prompt to use for Gemini
+        overwrite: Whether to overwrite existing output files
+        exit_on_skip: Whether to exit the program if file is skipped
+        
+    Returns:
+        bool: True if processing was successful, False otherwise
+    """
+    if not os.path.isfile(path):
+        print(f"Error: File '{path}' not found or is not a file.")
+        if exit_on_skip:
+            sys.exit(1)
+        return False
+        
+    if not path.lower().endswith('.pdf'):
+        print(f"Error: File '{path}' is not a PDF file.")
+        if exit_on_skip:
+            sys.exit(1)
+        return False
+        
+    output_path = f"{path}.json"
+    
+    # If overwrite not set and output file exists, skip
+    if not overwrite and os.path.exists(output_path):
+        logging.info(
+            f"Skipping {os.path.basename(path)} as {output_path} already exists. Use --overwrite to overwrite."
+        )
+        if exit_on_skip:
+            sys.exit(0)
+        return False
+        
+    try:
+        logging.info(f"Processing file: {os.path.basename(path)}")
+        results_json = process_with_gemini(path, client, prompt)
+
+        # Write the output to {path}.json
+        with open(output_path, "w", encoding="utf-8") as out_file:
+            out_file.write(results_json)
+
+        print(
+            f"Results for {os.path.basename(path)} have been written to {output_path}\n"
+        )
+        return True
+    except Exception as e:
+        logging.error(f"Error processing {os.path.basename(path)}: {e}")
+        if exit_on_skip:
+            sys.exit(1)
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Process PDF files using Gemini")
-    parser.add_argument(
+    
+    # Create a mutually exclusive group for directory vs. file options
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "directory", nargs="?", help="Path to directory containing PDFs"
     )
-    parser.add_argument(
+    group.add_argument(
         "--directory", dest="directory_opt", help="Path to directory containing PDFs"
     )
+    group.add_argument(
+        "--file", dest="file_path", help="Path to a single PDF file to process"
+    )
+    
     parser.add_argument(
         "--overwrite", action="store_true", help="Overwrite existing JSON files"
     )
 
     args = parser.parse_args()
-
-    directory = args.directory_opt if args.directory_opt else args.directory
-    if not directory:
-        print("Error: No directory specified.")
-        sys.exit(1)
-
-    if not os.path.isdir(directory):
-        print(f"Directory '{directory}' not found or is not a directory")
-        sys.exit(1)
 
     google_api_key = os.getenv("GOOGLE_API_KEY")
     if not google_api_key or google_api_key == "YOUR_API_KEY":
@@ -101,41 +155,33 @@ def main():
         sys.exit(1)
 
     prompt = get_prompt(args)
-
     client = genai.Client(api_key=google_api_key)
 
-    found_pdf = False
-    with os.scandir(directory) as entries:
-        for entry in entries:
-            if entry.is_file() and entry.name.lower().endswith(".pdf"):
-                found_pdf = True
-                path = os.path.join(directory, entry.name)
-                output_path = f"{path}.json"
+    # Process a single file
+    if args.file_path:
+        process_pdf_file(args.file_path, client, prompt, args.overwrite, exit_on_skip=True)
+    else:
+        # Process all files in a directory (existing functionality)
+        directory = args.directory_opt if args.directory_opt else args.directory
+        if not directory:
+            print("Error: No directory specified.")
+            sys.exit(1)
 
-                # If overwrite not set and output file exists, skip
-                if not args.overwrite and os.path.exists(output_path):
-                    logging.info(
-                        f"Skipping {entry.name} as {output_path} already exists. Use --overwrite to overwrite."
-                    )
-                    continue
+        if not os.path.isdir(directory):
+            print(f"Directory '{directory}' not found or is not a directory")
+            sys.exit(1)
 
-                try:
-                    logging.info(f"Processing file: {entry.name}")
-                    results_json = process_with_gemini(path, client, prompt)
+        found_pdf = False
+        with os.scandir(directory) as entries:
+            for entry in entries:
+                if entry.is_file() and entry.name.lower().endswith(".pdf"):
+                    found_pdf = True  # Mark that we found a PDF file
+                    path = os.path.join(directory, entry.name)
+                    process_pdf_file(path, client, prompt, args.overwrite)
 
-                    # Write the output to {path}.json
-                    with open(output_path, "w", encoding="utf-8") as out_file:
-                        out_file.write(results_json)
-
-                    print(
-                        f"Results for {entry.name} have been written to {output_path}\n"
-                    )
-                except Exception as e:
-                    logging.error(f"Error processing {entry.name}: {e}")
-
-    if not found_pdf:
-        print(f"No PDF files found in directory '{directory}'")
-        sys.exit(1)
+        if not found_pdf:
+            print(f"No PDF files found in directory '{directory}'")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
