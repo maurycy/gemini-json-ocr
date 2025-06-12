@@ -1,0 +1,40 @@
+[project]
+name = "gemini-json-ocr"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "python-dotenv",
+    "google-genai",
+    "pydantic",
+]
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "ty"
+]
+
+[tool.ruff]
+extend-exclude = ["ruff"]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "B",
+    "B9",
+    "C4",
+    "SIM",
+    "I",
+    "UP",
+    "PIE",
+    "PGH",
+    "PYI",
+    "RUF",
+]
+
+ignore = [
+    "E501",
+]

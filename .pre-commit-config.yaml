@@ -1,0 +1,37 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.8
+    hooks:
+      - id: ruff-format
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]
+        require_serial: true
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.7.3
+    hooks:
+      - id: uv-lock
+
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.24.1
+    hooks:
+      - id: validate-pyproject
+
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.22
+    hooks:
+      - id: mdformat
+        additional_dependencies:
+          - mdformat-mkdocs==4.0.0
+          - mdformat-footnote==0.1.1
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.44.0
+    hooks:
+      - id: markdownlint-fix
