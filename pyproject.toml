@@ -7,7 +7,6 @@ requires-python = ">=3.9"
 dependencies = [
     "python-dotenv",
     "google-genai",
-    "pydantic",
 ]
 
 [dependency-groups]
