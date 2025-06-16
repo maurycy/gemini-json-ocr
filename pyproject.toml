@@ -16,9 +16,6 @@ dev = [
     "ty"
 ]
 
-[tool.ruff]
-extend-exclude = ["ruff"]
-
 [tool.ruff.lint]
 select = [
     "E",
